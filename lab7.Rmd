@@ -1,0 +1,55 @@
+---
+title: "Lab7"
+author: Jesse and Ryan
+output: html_notebook
+---
+
+## 2
+The quiz grades seem to have a weak positive association with each other. There is an association because the grades are 
+```{r}
+plot(quiz)
+```
+## 3
+```{r}
+plot(quiz$Q2,quiz$Q6)
+```
+## 4
+Yes the Pearson Correlation test shows a positive correlation between Quiz 2 and 6. 
+```{r}
+cor(quiz$Q2, quiz$Q6)
+```
+## 5
+```{r}
+single.boot<-function(x, y){
+  indicies<-sample(length(x), replace=TRUE)
+  boot.corr<-cor(x[indicies], y[indicies])
+  return(boot.corr)
+}
+single.boot(quiz$Q2, quiz$Q6)
+```
+```{r}
+bootstrap.cor<-function(x,y,B=2000){
+correlation<-replicate(B, single.boot(x,y))
+return(correlation)
+}
+#bootstrap.cor(quiz$Q2, quiz$Q6)
+```
+
+## 6
+```{r}
+estimate<-bootstrap.cor(x=quiz$Q2, y=quiz$Q6, B=5000)
+hist(estimate)
+```
+## 7 
+```{r}
+
+```
+
+
+
+```{r}
+
+frame[sample(1:nrow(frame), replace = TRUE), ]
+
+```
+
