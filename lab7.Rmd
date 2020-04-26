@@ -3,6 +3,7 @@ title: "Lab7"
 author: Jesse and Ryan
 output: html_notebook
 ---
+GitHub URL: https://github.com/s1075803/lab7
 
 ## 2
 The quiz grades seem to have a weak positive association with each other. There is an association because the grades are 
@@ -42,14 +43,39 @@ hist(estimate)
 ```
 ## 7 
 ```{r}
+quantile(estimate, c(0.025,0.975))
+test<-cor.test(x=quiz$Q2, y=quiz$Q6,conf.level = 0.95)
+test$conf
+```
+
+## 8
+```{r}
+cov1<-cov(quiz)
+cov1[1,5]
+cov(quiz$Q2, quiz$Q6)
 
 ```
 
-
-
+## 9
+They are in decreasing order.
 ```{r}
+eigen.vals<-eigen(cov1)$values
+eigen.vals
+```
 
-frame[sample(1:nrow(frame), replace = TRUE), ]
+## 10
+```{r}
+sum(eigen.vals)
+sum(diag(cov1))
+```
+
+## 11
+```{r}
+eigen.vals[1]/sum(eigen.vals)
+```
+
+## 12
+```{r}
 
 ```
 
