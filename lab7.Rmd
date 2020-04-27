@@ -1,81 +1,255 @@
 ---
 title: "Lab7"
-author: Jesse and Ryan
-output: html_notebook
+author: "Jesse Bragger and Ryan Greenstone"
+output:
+  html_document:
+    df_print: paged
 ---
+
 GitHub URL: https://github.com/s1075803/lab7
 
-## 2
-The quiz grades seem to have a weak positive association with each other. There is an association because the grades are 
+## 1
+
 ```{r}
-plot(quiz)
+
+quiz <- read.csv('quiz.csv', sep = ',')
+
 ```
+
+
+## 2
+
+
+```{r}
+
+plot(quiz)
+
+```
+
+The quiz grades seem to have a weak positive association with each other. This is because if you consider the upper half plots, the data points seem to trend upward. Since each successive quiz is plotted on the horizontal access and the prior quizes are plotted on the vertical axis, the weak positive association in each graph indicates that each successive quiz is associated with a lower quiz score than the previous quiz. In other words, the weak positive association indicates decreasing quiz scores because of the way that the pairs plot was plotted.  
+
 ## 3
 ```{r}
+
 plot(quiz$Q2,quiz$Q6)
+
 ```
 ## 4
+
 Yes the Pearson Correlation test shows a positive correlation between Quiz 2 and 6. 
+
 ```{r}
+
 cor(quiz$Q2, quiz$Q6)
+
 ```
+
+Since the Pearson correlation is 0.4909938, which is between 0 and 1, the Pearson correlation indicates a positive association between quiz percentages.
+
 ## 5
+
 ```{r}
+
+#' The single.boot function creates a single bootstrap for a sample
+#' of random vectors where each random vector contains 2 random
+#' variables. Then, the correlation of that bootstrap is computed.
+#'
+#' @param x The first of 2 random variables in each random vector.
+#' @param y The second of 2 random variables in each random vector.
+#'
+#' @return The sample correlation of the bootstrap. 
+
 single.boot<-function(x, y){
-  indicies<-sample(length(x), replace=TRUE)
-  boot.corr<-cor(x[indicies], y[indicies])
+  
+  indicies <- sample(length(x), replace=TRUE)
+  
+  boot.corr <- cor(x[indicies], y[indicies])
+  
   return(boot.corr)
+  
 }
-single.boot(quiz$Q2, quiz$Q6)
+
+#single.boot(quiz$Q2, quiz$Q6)
+
 ```
+
+
+
 ```{r}
-bootstrap.cor<-function(x,y,B=2000){
-correlation<-replicate(B, single.boot(x,y))
+
+#' The bootstrap.cor function computes multiple sample correlations
+#' from multiple bootstrap samples generated using the function
+#' single.boot.
+#'
+#' @param x The first of 2 random variables in each random vector.
+#' @param y The second of 2 random variables in each random vector.
+#' @param B The number of bootstrap samples to generate.
+#'
+#' @return B bootstrap estimates of the Pearson correlation.
+
+bootstrap.cor <- function(x, y, B = 2000){
+  
+correlation <- replicate(B, single.boot(x, y))
+
 return(correlation)
+
 }
+
 #bootstrap.cor(quiz$Q2, quiz$Q6)
+
 ```
 
 ## 6
+
 ```{r}
-estimate<-bootstrap.cor(x=quiz$Q2, y=quiz$Q6, B=5000)
+
+set.seed(0)
+
+estimate <- bootstrap.cor(x = quiz$Q2, y = quiz$Q6, B = 5000)
+
 hist(estimate)
+
 ```
+
+The histogram is left-skewed with most observations between 0.5 and 0.6, the second most obeservations between 0.4 and 0.5, and the vast majority of observations between 0 and 1. An extremely small proportion of the observations are negative, and the observations that are negative are between -0.2 and 0.
+
 ## 7 
+
 ```{r}
+
 quantile(estimate, c(0.025,0.975))
-test<-cor.test(x=quiz$Q2, y=quiz$Q6,conf.level = 0.95)
+
+test <- cor.test(x = quiz$Q2, y = quiz$Q6, conf.level = 0.95)
+
 test$conf
+
 ```
+
+A 95% bootstrap percentile confidence interval for the correlation between the Quiz 2 and Quiz 6 percentages is (0.1792, 0.7586) and a 95% confidence interval using Fisher’s Z-transformation is (0.0619, 0.7669). The two confidence intervals are similar, but the confidence interval using Fisher’s Z-transformation is objectively more conservative than the bootstrap percentile confidence interval because the former's lower estimate is lower than the latter's lower estimate and the former's upper estimate is higher than the latter's upper estimate. You can reject the null hypothesis that there is no association between a student’s Quiz 2 and Quiz 6 scores using both confidence intervals because 0 is not contained within either confidence interval. Note, however, that rejecting the null hypothesis using both confidence intervals works at a 95% confidence interval. At a higher significance level, you might be able to reject the null hypothesis with the bootstrap percentile confidence interval but not the Fisher’s Z-transformation confidence interval. At an even higher significance level, you might be unable to reject the null hypothesis with either confidence interval.
 
 ## 8
+
 ```{r}
-cov1<-cov(quiz)
-cov1[1,5]
-cov(quiz$Q2, quiz$Q6)
+
+cov.mat <- cov(quiz)
+
+cov.mat
+
+cov.mat[1, 2]
+
+cov(quiz$Q2, quiz$Q3)
 
 ```
+
+The (1, 2) entry in cov.mat matches the covariance we get from passing the Quiz 2 and Quiz 3 percentages to the x and y arguments of cov(). This entry is 230.7018.
 
 ## 9
-They are in decreasing order.
+
+
 ```{r}
-eigen.vals<-eigen(cov1)$values
+
+eigen.vals <- eigen(cov.mat)$values
+
 eigen.vals
+
 ```
+
+The eigenvalues are sorted in decreasing order.
 
 ## 10
+
 ```{r}
+
 sum(eigen.vals)
-sum(diag(cov1))
+sum(diag(cov.mat))
+
 ```
+
+Yes, the sum of the eigenvalues of the covariance matrix matches the sum of the variances across all of the scores because both sums are equal to 3811.496.
 
 ## 11
+
 ```{r}
+
 eigen.vals[1]/sum(eigen.vals)
+
 ```
+
+The proportion of the variance is captured by the first principal component is 0.6417838.
 
 ## 12
+
 ```{r}
 
+#' The bootstrap.eigenratio.single function creates a single
+#' bootstrap for a sample of random vectors. Then, the eigenratio of
+#' that bootstrap is computed.
+#'
+#' @param mat The data frame containing a sample of random vectors.
+#'
+#' @return The sample eigenratio of the bootstrap.
+
+bootstrap.eigenratio.single <- function(mat){
+ 
+  boot.mat <- mat[sample(1:nrow(mat), replace = TRUE), ]
+  
+  cov.mat <- cov(boot.mat)
+  
+  eigen.vals <- eigen(cov.mat)$values
+  
+  ratio.single <- eigen.vals[1]/sum(eigen.vals)
+  
+  return(ratio.single)
+   
+}
+
+
 ```
+
+
+```{r}
+
+#' The bootstrap.cor function computes multiple sample eigenratios
+#' from multiple bootstrap samples generated using the function
+#' bootstrap.eigenratio.single.
+#'
+#' @param mat The data frame containing a sample of random vectors.
+#' @param B The number of bootstrap samples to generate.
+#'
+#' @return B bootstrap estimates of the eigenratio.
+
+bootstrap.eigenratio <- function(mat, B = 2000){
+  
+ratio.multiple <- replicate(B, bootstrap.eigenratio.single(mat))
+
+return(ratio.multiple)
+
+}
+
+#bootstrap.eigenratio(quiz)
+
+```
+
+
+## 13
+
+```{r}
+
+set.seed(0)
+
+estimate <- bootstrap.eigenratio(mat = quiz, B = 5000)
+
+```
+
+
+```{r}
+
+quantile(estimate, c(0.025,0.975))
+
+```
+
+The proportion of the total variance in the scores we can confidently assign to the largest principal component is some value between 0.498144 and 0.7970077. Note that 95% of the time, we should expect our 95% confidence interval to capture the true proportion of the total variance in the scores. However, our specific 95% confidence interval either does or does not capture the true proportion.
+
+
+
 
